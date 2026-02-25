@@ -15,9 +15,6 @@ eggs/
 .eggs/
 lib/
 lib64/
-
-# Exceção: frontend/lib contém código fonte (auth, supabase, etc.)
-!frontend/lib/
 parts/
 sdist/
 var/
@@ -53,3 +50,6 @@ yarn-error.log*
 # OS
 .DS_Store
 Thumbs.db
+
+# Backend - dados locais (áudios, logs, etc.)
+backend/data/
