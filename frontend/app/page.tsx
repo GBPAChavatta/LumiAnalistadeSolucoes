@@ -78,9 +78,21 @@ export default function Home() {
     async (data: LeadData) => {
       setIsRegistering(true);
       try {
-        const leadId = USE_SUPABASE_LEADS
-          ? await registerViaSupabase(data)
-          : await registerViaBackend(data);
+        let leadId: string;
+        if (USE_SUPABASE_LEADS) {
+          try {
+            leadId = await registerViaSupabase(data);
+          } catch (supabaseError) {
+            const msg = supabaseError instanceof Error ? supabaseError.message : String(supabaseError);
+            if (msg.includes("row-level security") || msg.includes("RLS") || msg.includes("violates")) {
+              leadId = await registerViaBackend(data);
+            } else {
+              throw supabaseError;
+            }
+          }
+        } else {
+          leadId = await registerViaBackend(data);
+        }
         setLeadData({ ...data, id: leadId });
         setHasEndedConversation(false);
       } catch (error) {
