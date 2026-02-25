@@ -10,8 +10,6 @@ async def get_pool() -> asyncpg.Pool:
     """Retorna o pool de conexões. Cria e inicializa a tabela se necessário."""
     global _pool
     if _pool is None:
-        if not settings.database_url:
-            raise RuntimeError("DATABASE_URL não configurado")
         _pool = await asyncpg.create_pool(
             settings.database_url,
             min_size=1,
