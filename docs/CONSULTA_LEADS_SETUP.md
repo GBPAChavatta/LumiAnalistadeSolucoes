@@ -14,6 +14,7 @@ A página `/consulta-leads` lista os leads cadastrados e permite marcar "Contato
 6. Em **Authorized redirect URIs**, adicione:
    - Desenvolvimento: `http://localhost:3000/api/auth/callback/google`
    - Produção: `https://seu-dominio.vercel.app/api/auth/callback/google`
+   - Preview Vercel: `https://lumi-analistade-solucoes-git-main-gbpachavattas-projects.vercel.app/api/auth/callback/google` (ou a URL do seu preview)
 7. Copie o **Client ID** e **Client Secret**.
 
 ## 2. Variáveis de ambiente
@@ -27,8 +28,14 @@ NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=  # gere com: openssl rand -base64 32
 ```
 
-Para produção, use:
-- `NEXTAUTH_URL=https://seu-dominio.vercel.app`
+Para produção na Vercel:
+
+- **NEXTAUTH_SECRET** – obrigatório; sem ele o NextAuth retorna 500 em produção. Gere com: `openssl rand -base64 32`
+- **NEXTAUTH_URL** – use `https://seu-dominio.vercel.app` (produção) ou deixe em branco se usar apenas previews
+- **trustHost** – já configurado no código para aceitar URLs dinâmicas de preview da Vercel (ex.: `lumi-analistade-solucoes-git-main-...vercel.app`)
+
+Para preview deployments: adicione em **Authorized redirect URIs** no Google Console cada URL de preview que for usar, ex.:  
+`https://lumi-analistade-solucoes-git-main-gbpachavattas-projects.vercel.app/api/auth/callback/google`
 
 ## 3. Restrição de domínio
 
