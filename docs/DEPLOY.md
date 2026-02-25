@@ -44,6 +44,7 @@
      - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (ver [CONSULTA_LEADS_SETUP.md](CONSULTA_LEADS_SETUP.md))
      - `NEXTAUTH_SECRET` (obrigatório em produção: `openssl rand -base64 32`)
      - `NEXTAUTH_URL` = URL do frontend (ex: `https://seu-projeto.vercel.app`)
+     - `NEXTAUTH_TRUST_HOST=true` (para preview deployments)
 6. Clique em **Deploy**.
 
 ---

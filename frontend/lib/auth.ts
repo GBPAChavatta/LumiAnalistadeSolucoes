@@ -4,7 +4,6 @@ import GoogleProvider from "next-auth/providers/google";
 const ALLOWED_DOMAIN = "gbpa.com.br";
 
 export const authOptions: NextAuthOptions = {
-  trustHost: true, // necessário para preview deployments da Vercel (URLs dinâmicas)
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,

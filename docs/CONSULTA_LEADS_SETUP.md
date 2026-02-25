@@ -32,7 +32,7 @@ Para produção na Vercel:
 
 - **NEXTAUTH_SECRET** – obrigatório; sem ele o NextAuth retorna 500 em produção. Gere com: `openssl rand -base64 32`
 - **NEXTAUTH_URL** – use `https://seu-dominio.vercel.app` (produção) ou deixe em branco se usar apenas previews
-- **trustHost** – já configurado no código para aceitar URLs dinâmicas de preview da Vercel (ex.: `lumi-analistade-solucoes-git-main-...vercel.app`)
+- **NEXTAUTH_TRUST_HOST** – defina `true` na Vercel para aceitar URLs dinâmicas de preview (ex.: `lumi-analistade-solucoes-git-main-...vercel.app`)
 
 Para preview deployments: adicione em **Authorized redirect URIs** no Google Console cada URL de preview que for usar, ex.:  
 `https://lumi-analistade-solucoes-git-main-gbpachavattas-projects.vercel.app/api/auth/callback/google`
