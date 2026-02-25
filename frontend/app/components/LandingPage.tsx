@@ -74,8 +74,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLeadSubmit, isSubmit
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4">
-      <div className="w-full max-w-2xl bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 p-8 md:p-12">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-700 via-gray-600 to-gray-700 p-4">
+      <div className="w-full max-w-2xl bg-gray-700 rounded-2xl shadow-2xl border border-gray-600 p-8 md:p-12">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-3">

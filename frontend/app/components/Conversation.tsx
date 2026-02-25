@@ -190,9 +190,25 @@ export function Conversation({ leadData, onConversationEnded }: ConversationProp
     userMediaStreamRef.current = null;
   }, []);
 
+  const CONNECTION_TIMEOUT_MS = 25_000;
+
+  const fetchWithTimeout = useCallback(
+    async (url: string): Promise<Response> => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), CONNECTION_TIMEOUT_MS);
+      try {
+        const response = await fetch(url, { signal: controller.signal });
+        return response;
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    },
+    []
+  );
+
   const getConversationToken = useCallback(async (): Promise<string | null> => {
     try {
-      const response = await fetch(`${API_URL}/api/conversation/token`);
+      const response = await fetchWithTimeout(`${API_URL}/api/conversation/token`);
       if (!response.ok) {
         throw new Error(`Falha ao obter token: ${response.status}`);
       }
@@ -202,16 +218,27 @@ export function Conversation({ leadData, onConversationEnded }: ConversationProp
       console.warn("[Conversation] token WebRTC indisponível, tentando signed-url:", err);
       return null;
     }
-  }, []);
+  }, [fetchWithTimeout]);
 
   const getSignedUrl = useCallback(async (): Promise<string> => {
-    const response = await fetch(`${API_URL}/api/conversation/signed-url`);
+    const response = await fetchWithTimeout(`${API_URL}/api/conversation/signed-url`);
     if (!response.ok) {
       throw new Error(`Falha ao obter signed URL: ${response.status}`);
     }
     const data = await response.json();
     return data.signed_url;
-  }, []);
+  }, [fetchWithTimeout]);
+
+  /** Tenta token e signed-url em paralelo; usa o que responder primeiro. Reduz demora quando um falha. */
+  const getConnectionParams = useCallback(async (): Promise<
+    { type: "token"; value: string } | { type: "signed"; value: string }
+  > => {
+    const tokenPromise = getConversationToken().then((t) =>
+      t ? { type: "token" as const, value: t } : Promise.reject(new Error("Token indisponível"))
+    );
+    const signedPromise = getSignedUrl().then((url) => ({ type: "signed" as const, value: url }));
+    return Promise.any([tokenPromise, signedPromise]);
+  }, [getConversationToken, getSignedUrl]);
 
   const handleConnect = useCallback(async () => {
     try {
@@ -232,19 +259,18 @@ export function Conversation({ leadData, onConversationEnded }: ConversationProp
       };
       const userId = leadData.id || leadData.email;
 
-      const token = await getConversationToken();
-      if (token) {
+      const params = await getConnectionParams();
+      if (params.type === "token") {
         await conversation.startSession({
-          conversationToken: token,
+          conversationToken: params.value,
           connectionType: "webrtc",
           userId,
           dynamicVariables: dynamicVars,
           overrides: { agent: { firstMessage } },
         });
       } else {
-        const signedUrl = await getSignedUrl();
         await conversation.startSession({
-          signedUrl,
+          signedUrl: params.value,
           userId,
           dynamicVariables: dynamicVars,
           overrides: { agent: { firstMessage } },
@@ -260,8 +286,7 @@ export function Conversation({ leadData, onConversationEnded }: ConversationProp
   }, [
     conversation,
     firstName,
-    getConversationToken,
-    getSignedUrl,
+    getConnectionParams,
     leadData,
     startUserAudioCapture,
     stopUserAudioCapture,
@@ -302,11 +327,10 @@ export function Conversation({ leadData, onConversationEnded }: ConversationProp
   }, [conversation.status]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4">
-      <div className="w-full max-w-4xl bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 p-8">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-700 via-gray-600 to-gray-700 p-4">
+      <div className="w-full max-w-4xl bg-gray-700 rounded-2xl shadow-2xl border border-gray-600 p-8">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-white mb-2">ElevenLabs AgentAI</h1>
-          <p className="text-gray-300">Integração oficial do widget/SDK ElevenLabs</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Lumi, nossa Analista de Soluções</h1>
         </div>
 
         <div className="mb-6 flex items-center justify-center gap-2">
@@ -316,21 +340,28 @@ export function Conversation({ leadData, onConversationEnded }: ConversationProp
           {errorMessage && <span className="text-sm text-red-400 ml-2">Erro: {errorMessage}</span>}
         </div>
 
-        <div className="mb-8 flex justify-center gap-4">
-          <button
-            onClick={handleConnect}
-            disabled={!canStart}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors border border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isStarting ? "Iniciando..." : "Iniciar conversa"}
-          </button>
-          <button
-            onClick={handleDisconnect}
-            disabled={!canStop}
-            className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors border border-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Encerrar conversa
-          </button>
+        <div className="mb-8 flex flex-col items-center gap-3">
+          <div className="flex justify-center gap-4">
+            <button
+              onClick={handleConnect}
+              disabled={!canStart}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors border border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isStarting ? "Preparando conexão..." : "Iniciar conversa"}
+            </button>
+            <button
+              onClick={handleDisconnect}
+              disabled={!canStop}
+              className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors border border-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Encerrar conversa
+            </button>
+          </div>
+          {isStarting && (
+            <p className="text-xs text-amber-400/90">
+              Na primeira vez pode levar até 1 minuto — por favor aguarde.
+            </p>
+          )}
         </div>
 
         <div className="mb-6 max-h-96 overflow-y-auto space-y-4">
@@ -345,7 +376,7 @@ export function Conversation({ leadData, onConversationEnded }: ConversationProp
                 className={`p-4 rounded-lg ${
                   transcript.speaker === "user"
                     ? "bg-blue-900 ml-8 border-l-4 border-blue-500"
-                    : "bg-gray-700 mr-8 border-r-4 border-gray-500"
+                    : "bg-gray-600 mr-8 border-r-4 border-gray-500"
                 }`}
               >
                 <div className="flex items-start justify-between mb-1">
