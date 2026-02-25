@@ -1,0 +1,2 @@
+# Esta pasta armazena os áudios TTS por lead
+# Estrutura: audio/{email_sanitizado}/{timestamp}_{speaker}_{eventId}.pcm
