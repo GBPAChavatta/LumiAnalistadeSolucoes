@@ -7,7 +7,6 @@ import { ThankYouPage } from "./components/ThankYouPage";
 import type { LeadData } from "./types/lead";
 import { API_URL, USE_SUPABASE_LEADS } from "./config";
 import { useBrowserConsoleCapture } from "./hooks/useBrowserConsoleCapture";
-import { createClient } from "./lib/supabase/client";
 
 export default function Home() {
   const [leadData, setLeadData] = useState<LeadData | null>(null);
@@ -17,6 +16,7 @@ export default function Home() {
   useBrowserConsoleCapture(() => leadData?.email, API_URL);
 
   const registerViaSupabase = useCallback(async (data: LeadData): Promise<string> => {
+    const { createClient } = await import("./lib/supabase/client");
     const supabase = createClient();
     const { data: row, error } = await supabase
       .from("leads")
