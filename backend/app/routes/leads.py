@@ -1,12 +1,12 @@
-"""Rotas para gerenciamento de leads."""
+"""Rotas para gerenciamento de leads (PostgreSQL ou CSV)."""
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Optional
 import csv
-import os
 import uuid
 from datetime import datetime
 from pathlib import Path
+
+from app.config import settings
 
 router = APIRouter(prefix="/api/leads", tags=["leads"])
 
@@ -18,34 +18,25 @@ class LeadCreate(BaseModel):
     empresa: str
 
 
-# Garantir que o diretório data existe
+# --- CSV (fallback quando DATABASE_URL não está definido) ---
 DATA_DIR = Path("data")
 DATA_DIR.mkdir(exist_ok=True)
 LEADS_CSV = DATA_DIR / "leads.csv"
 
 
-def ensure_csv_headers():
-    """Garante que o CSV tem os cabeçalhos corretos."""
+def _ensure_csv_headers() -> None:
     if not LEADS_CSV.exists():
         with open(LEADS_CSV, "w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerow(["id", "timestamp", "nome", "email", "telefone", "empresa"])
+            csv.writer(f).writerow(["id", "timestamp", "nome", "email", "telefone", "empresa"])
     else:
-        # Verificar se o arquivo existe mas não tem a coluna ID
         try:
             with open(LEADS_CSV, "r", encoding="utf-8") as f:
                 reader = csv.DictReader(f)
-                headers = reader.fieldnames
-                if headers and "id" not in headers:
-                    # Ler todas as linhas
+                if reader.fieldnames and "id" not in reader.fieldnames:
                     rows = list(reader)
-                    
-                    # Reescrever com ID
-                    with open(LEADS_CSV, "w", newline="", encoding="utf-8") as write_file:
-                        writer = csv.writer(write_file)
-                        # Escrever novo cabeçalho
+                    with open(LEADS_CSV, "w", newline="", encoding="utf-8") as w:
+                        writer = csv.writer(w)
                         writer.writerow(["id", "timestamp", "nome", "email", "telefone", "empresa"])
-                        # Reescrever linhas existentes com ID gerado
                         for i, row in enumerate(rows, start=1):
                             writer.writerow([
                                 f"legacy_{i}",
@@ -56,31 +47,66 @@ def ensure_csv_headers():
                                 row.get("empresa", ""),
                             ])
         except Exception as e:
-            print(f"[Leads] Erro ao verificar/atualizar CSV: {e}")
-            # Se houver erro, criar novo arquivo
+            print(f"[Leads] Erro ao verificar CSV: {e}")
             with open(LEADS_CSV, "w", newline="", encoding="utf-8") as f:
-                writer = csv.writer(f)
-                writer.writerow(["id", "timestamp", "nome", "email", "telefone", "empresa"])
+                csv.writer(f).writerow(["id", "timestamp", "nome", "email", "telefone", "empresa"])
+
+
+async def _register_lead_postgres(lead: LeadCreate) -> dict:
+    from app.database import get_pool
+    pool = await get_pool()
+    lead_id = uuid.uuid4()
+    async with pool.acquire() as conn:
+        await conn.execute(
+            """
+            INSERT INTO leads (id, nome, email, telefone, empresa)
+            VALUES ($1, $2, $3, $4, $5)
+            """,
+            lead_id,
+            lead.nome,
+            lead.email,
+            lead.telefone,
+            lead.empresa,
+        )
+    return {"lead_id": str(lead_id)}
+
+
+async def _list_leads_postgres() -> list:
+    from app.database import get_pool
+    pool = await get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            "SELECT id, created_at, nome, email, telefone, empresa FROM leads ORDER BY created_at DESC"
+        )
+    return [
+        {
+            "id": str(r["id"]),
+            "timestamp": r["created_at"].isoformat() if r["created_at"] else "",
+            "nome": r["nome"],
+            "email": r["email"],
+            "telefone": r["telefone"],
+            "empresa": r["empresa"],
+        }
+        for r in rows
+    ]
 
 
 @router.post("/register")
 async def register_lead(lead: LeadCreate):
-    """
-    Registra um novo lead no CSV.
-    
-    Referência: https://docs.python.org/3/library/csv.html
-    """
+    """Registra um novo lead (PostgreSQL se DATABASE_URL definido, senão CSV)."""
     try:
-        ensure_csv_headers()
-        
-        # Gerar ID único
+        if settings.database_url:
+            result = await _register_lead_postgres(lead)
+            return {
+                "success": True,
+                "message": "Lead registrado com sucesso",
+                "lead_id": result["lead_id"],
+            }
+        _ensure_csv_headers()
         lead_id = str(uuid.uuid4())
         timestamp = datetime.now().isoformat()
-        
-        # Adicionar linha ao CSV
         with open(LEADS_CSV, "a", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerow([
+            csv.writer(f).writerow([
                 lead_id,
                 timestamp,
                 lead.nome,
@@ -88,34 +114,26 @@ async def register_lead(lead: LeadCreate):
                 lead.telefone,
                 lead.empresa,
             ])
-        
         return {
             "success": True,
             "message": "Lead registrado com sucesso",
             "lead_id": lead_id,
         }
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Erro ao registrar lead: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Erro ao registrar lead: {str(e)}")
 
 
 @router.get("/list")
 async def list_leads():
-    """Lista todos os leads registrados."""
+    """Lista todos os leads (PostgreSQL ou CSV)."""
     try:
+        if settings.database_url:
+            leads = await _list_leads_postgres()
+            return {"leads": leads}
         if not LEADS_CSV.exists():
             return {"leads": []}
-        
-        leads = []
         with open(LEADS_CSV, "r", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            leads = list(reader)
-        
+            leads = list(csv.DictReader(f))
         return {"leads": leads}
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Erro ao listar leads: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Erro ao listar leads: {str(e)}")

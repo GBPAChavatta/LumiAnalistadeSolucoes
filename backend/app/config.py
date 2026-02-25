@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     
     elevenlabs_api_key: str = Field(..., alias="ELEVENLABS_API_KEY")
     agent_id: Optional[str] = Field(None, alias="AGENT_ID")
+    database_url: Optional[str] = Field(None, alias="DATABASE_URL")
     elevenlabs_agent_id: Optional[str] = Field(None, alias="ELEVENLABS_AGENT_ID")
     cors_origins: Optional[str] = Field(default="http://localhost:3000", alias="CORS_ORIGINS")
     
