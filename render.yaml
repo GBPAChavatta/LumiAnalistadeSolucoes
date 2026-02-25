@@ -1,0 +1,25 @@
+# Render Blueprint - backend FastAPI
+# Deploy em: https://dashboard.render.com → New → Blueprint
+services:
+  - type: web
+    name: lumi-backend
+    runtime: python
+    region: oregon
+    plan: free
+
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+
+    rootDir: backend
+
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: AGENT_ID
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
