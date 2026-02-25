@@ -62,6 +62,9 @@ async def _init_leads_table() -> None:
                 empresa TEXT NOT NULL
             )
         """)
+        await conn.execute("""
+            ALTER TABLE leads ADD COLUMN IF NOT EXISTS contato_feito BOOLEAN NOT NULL DEFAULT FALSE
+        """)
 
 
 async def close_pool() -> None:

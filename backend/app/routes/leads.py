@@ -70,7 +70,7 @@ async def list_leads():
         pool = await get_pool()
         async with pool.acquire() as conn:
             rows = await conn.fetch(
-                "SELECT id, created_at, nome, email, telefone, empresa FROM leads ORDER BY created_at DESC"
+                "SELECT id, created_at, nome, email, telefone, empresa, COALESCE(contato_feito, false) as contato_feito FROM leads ORDER BY created_at DESC"
             )
         leads = [
             {
@@ -80,9 +80,44 @@ async def list_leads():
                 "email": r["email"],
                 "telefone": r["telefone"],
                 "empresa": r["empresa"],
+                "contato_feito": bool(r["contato_feito"]),
             }
             for r in rows
         ]
         return {"leads": leads}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao listar leads: {str(e)}")
+
+
+class ContatoFeitoUpdate(BaseModel):
+    contato_feito: bool
+
+
+@router.patch("/{lead_id}/contato-feito")
+async def update_contato_feito(lead_id: str, body: ContatoFeitoUpdate):
+    """Atualiza o flag contato_feito de um lead."""
+    if not settings.database_url:
+        raise HTTPException(
+            status_code=503,
+            detail="DATABASE_URL não configurado.",
+        )
+    try:
+        uid = uuid.UUID(lead_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="ID de lead inválido.")
+    try:
+        pool = await get_pool()
+        contato_feito = body.contato_feito
+        async with pool.acquire() as conn:
+            result = await conn.execute(
+                "UPDATE leads SET contato_feito = $1 WHERE id = $2",
+                contato_feito,
+                uid,
+            )
+        if result == "UPDATE 0":
+            raise HTTPException(status_code=404, detail="Lead não encontrado.")
+        return {"success": True, "contato_feito": contato_feito}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao atualizar lead: {str(e)}")

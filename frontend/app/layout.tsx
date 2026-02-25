@@ -37,19 +37,27 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-700 text-gray-100`}
       >
         {/* Logo GBPA fixo no canto esquerdo superior */}
-        <a
-          href="https://gbpa.com.br"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="fixed top-4 left-4 z-50 block w-24 h-auto md:w-32 lg:w-36 opacity-90 hover:opacity-100 transition-opacity"
-          aria-label="GBPA - Grupo Growtec"
-        >
-          <img
-            src={GBPA_LOGO_URL}
-            alt="GBPA - Grupo Growtec"
-            className="w-full h-auto object-contain"
-          />
-        </a>
+        <div className="fixed top-4 left-4 z-50 flex items-center gap-3">
+          <a
+            href="https://gbpa.com.br"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-24 h-auto md:w-32 lg:w-36 opacity-90 hover:opacity-100 transition-opacity"
+            aria-label="GBPA - Grupo Growtec"
+          >
+            <img
+              src={GBPA_LOGO_URL}
+              alt="GBPA - Grupo Growtec"
+              className="w-full h-auto object-contain"
+            />
+          </a>
+          <a
+            href="/consulta-leads"
+            className="text-sm text-gray-300 hover:text-white transition-colors"
+          >
+            Consulta Leads
+          </a>
+        </div>
         <ClientProviders>
           {children}
         </ClientProviders>
