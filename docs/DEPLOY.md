@@ -40,6 +40,10 @@
    - Opcional (para leads direto no Supabase):
      - `NEXT_PUBLIC_SUPABASE_URL`
      - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - Para a página **Consulta de Leads** (Google OAuth):
+     - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (ver [CONSULTA_LEADS_SETUP.md](CONSULTA_LEADS_SETUP.md))
+     - `NEXTAUTH_SECRET` (obrigatório em produção: `openssl rand -base64 32`)
+     - `NEXTAUTH_URL` = URL do frontend (ex: `https://seu-projeto.vercel.app`)
 6. Clique em **Deploy**.
 
 ---
@@ -62,7 +66,8 @@ Ou, para aceitar múltiplas origens: `https://app1.vercel.app,https://app2.verce
 - [ ] Frontend publicado na Vercel
 - [ ] `NEXT_PUBLIC_API_URL` apontando para o backend
 - [ ] `CORS_ORIGINS` inclui a URL do frontend
-- [ ] Política RLS do Supabase configurada (se usar leads direto)
+- [ ] Política RLS do Supabase configurada (ver [SUPABASE_RLS_LEADS.md](SUPABASE_RLS_LEADS.md))
+- [ ] Se usar Consulta de Leads: `NEXTAUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` e Redirect URI no Google Console (ver [CONSULTA_LEADS_SETUP.md](CONSULTA_LEADS_SETUP.md))
 
 ---
 

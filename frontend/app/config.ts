@@ -1,4 +1,4 @@
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 // Aceita variáveis da integração Vercel+Supabase (NEXT_PUBLIC_SUPABASE_ANON_KEY) ou manual
 export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;

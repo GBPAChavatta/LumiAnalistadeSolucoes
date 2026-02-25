@@ -137,10 +137,10 @@ Sem **First message** override ativado, a saudação personalizada não será ap
 - No projeto, configure no `.env` do backend:
 
 ```env
-ELEVENLABS_AGENT_ID=agent_xxxxx
+AGENT_ID=agent_xxxxx
 ```
 
-(ou a variável que seu backend usa para `agent_id`.)
+(O backend aceita `AGENT_ID` ou `ELEVENLABS_AGENT_ID`.)
 
 ---
 
@@ -157,4 +157,4 @@ ELEVENLABS_AGENT_ID=agent_xxxxx
 | Sem internet / só contexto da empresa | System prompt |
 | Override da primeira mensagem | Security → First message |
 
-Depois de publicar o agente e configurar o `ELEVENLABS_AGENT_ID`, a Lumi passará a saudar com o nome do lead e a trabalhar apenas com o desafio e a Knowledge Base, sugerindo MVP/PoC alinhados aos projetos e ferramentas da empresa.
+Depois de publicar o agente e configurar o `AGENT_ID`, a Lumi passará a saudar com o nome do lead e a trabalhar apenas com o desafio e a Knowledge Base, sugerindo MVP/PoC alinhados aos projetos e ferramentas da empresa.

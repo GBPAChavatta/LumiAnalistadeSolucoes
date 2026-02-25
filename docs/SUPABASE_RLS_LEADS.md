@@ -1,5 +1,7 @@
 # Política RLS para tabela `leads` no Supabase
 
+> **Criar a tabela**: se a tabela `leads` ainda não existir, use o SQL em [SUPABASE_RLS.md](SUPABASE_RLS.md).
+
 ## Erro
 
 ```

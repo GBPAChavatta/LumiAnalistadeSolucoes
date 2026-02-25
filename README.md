@@ -12,11 +12,22 @@ Interface web completa para conversação com AgentAI da ElevenLabs, implementan
 
 ```
 Lumi-ElevenLabs-Supressao/
-├── frontend/          # Aplicação Next.js
-├── backend/           # API FastAPI
+├── frontend/          # Aplicação Next.js (chat Lumi + Consulta de Leads)
+├── backend/           # API FastAPI (tokens, signed URLs, leads)
+├── docs/              # Documentação detalhada (deploy, Supabase, agent ElevenLabs)
 ├── README.md
-└── .gitignore
+└── SETUP.md
 ```
+
+### Documentação adicional
+
+| Documento | Descrição |
+|-----------|-----------|
+| [SETUP.md](SETUP.md) | Guia rápido de instalação |
+| [docs/DEPLOY.md](docs/DEPLOY.md) | Deploy na Vercel (frontend) e Render (backend) |
+| [docs/CONSULTA_LEADS_SETUP.md](docs/CONSULTA_LEADS_SETUP.md) | Página Consulta de Leads (Google OAuth, domínio @gbpa.com.br) |
+| [docs/AGENT_ELEVENLABS_SETUP.md](docs/AGENT_ELEVENLABS_SETUP.md) | Configuração do agente Lumi na ElevenLabs |
+| [docs/SUPABASE_RLS.md](docs/SUPABASE_RLS.md) | Políticas RLS para tabela `leads` (Supabase) |
 
 ## Configuração
 
@@ -72,10 +83,7 @@ npm install
 cp .env.local.example .env.local
 ```
 
-4. Edite o `.env.local` se necessário (o padrão já está configurado):
-```
-NEXT_PUBLIC_API_URL=http://localhost:8000
-```
+4. Edite o `.env.local` com suas credenciais (veja `.env.local.example` para referência)
 
 5. Execute o servidor de desenvolvimento:
 ```bash
@@ -107,6 +115,11 @@ O supressor de ruídos é configurado automaticamente usando o SDK `@elevenlabs/
 - Botão que captura áudio apenas quando pressionado
 - Feedback visual durante gravação
 - Suporte para mouse e touch devices
+
+### Consulta de Leads (opcional)
+- Página `/consulta-leads` para listar leads e marcar "Contato feito"
+- Acesso restrito a usuários `@gbpa.com.br` via Google OAuth
+- Requer backend com Supabase/PostgreSQL. Ver [docs/CONSULTA_LEADS_SETUP.md](docs/CONSULTA_LEADS_SETUP.md)
 
 ### Transcrições em Tempo Real
 - Exibição de transcrições parciais (enquanto fala)

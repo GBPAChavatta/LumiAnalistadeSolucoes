@@ -43,7 +43,7 @@ Apenas emails `@gbpa.com.br` podem acessar. Isso é validado no callback `signIn
 
 ## 4. Backend
 
-O endpoint `/api/leads/list` e `PATCH /api/leads/{id}/contato-feito` precisam estar disponíveis. Garanta que `NEXT_PUBLIC_API_URL` aponte para o backend em produção.
+O endpoint `/api/leads/list` e `PATCH /api/leads/{id}/contato-feito` precisam estar disponíveis. Garanta que `NEXT_PUBLIC_API_URL` aponte para o backend em produção (ver [DEPLOY.md](DEPLOY.md)).
 
 ## 5. Coluna contato_feito
 

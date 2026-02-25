@@ -1,6 +1,8 @@
 # Política RLS para tabela `leads` (Supabase)
 
-Para que o frontend consiga inserir leads diretamente no Supabase, é necessário criar uma política RLS que permita INSERT para usuários anônimos.
+Para que o frontend consiga inserir leads diretamente no Supabase, é necessário criar a tabela e uma política RLS que permita INSERT para usuários anônimos.
+
+> **Troubleshooting**: se aparecer o erro `new row violates row-level security policy`, consulte [SUPABASE_RLS_LEADS.md](SUPABASE_RLS_LEADS.md).
 
 Execute no **SQL Editor** do Supabase:
 

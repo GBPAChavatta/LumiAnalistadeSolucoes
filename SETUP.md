@@ -77,3 +77,10 @@ CORS_ORIGINS=http://localhost:3000
 ### Microfone não funciona
 - Verifique permissões do navegador
 - Use HTTPS ou localhost (requisito do navegador)
+
+## Documentação completa
+
+- **Deploy** (Vercel + Render): [docs/DEPLOY.md](docs/DEPLOY.md)
+- **Consulta de Leads** (Google OAuth): [docs/CONSULTA_LEADS_SETUP.md](docs/CONSULTA_LEADS_SETUP.md)
+- **Agente ElevenLabs**: [docs/AGENT_ELEVENLABS_SETUP.md](docs/AGENT_ELEVENLABS_SETUP.md)
+- **Supabase RLS** (leads): [docs/SUPABASE_RLS_LEADS.md](docs/SUPABASE_RLS_LEADS.md)
