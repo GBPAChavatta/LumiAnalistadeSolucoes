@@ -5,8 +5,9 @@ import { LandingPage } from "./components/LandingPage";
 import { Conversation } from "./components/Conversation";
 import { ThankYouPage } from "./components/ThankYouPage";
 import type { LeadData } from "./types/lead";
-import { API_URL } from "./config";
+import { API_URL, USE_SUPABASE_LEADS } from "./config";
 import { useBrowserConsoleCapture } from "./hooks/useBrowserConsoleCapture";
+import { createClient } from "./lib/supabase/client";
 
 export default function Home() {
   const [leadData, setLeadData] = useState<LeadData | null>(null);
@@ -15,26 +16,85 @@ export default function Home() {
 
   useBrowserConsoleCapture(() => leadData?.email, API_URL);
 
-  const handleLeadSubmit = useCallback(async (data: LeadData) => {
-    setIsRegistering(true);
+  const registerViaSupabase = useCallback(async (data: LeadData): Promise<string> => {
+    const supabase = createClient();
+    const { data: row, error } = await supabase
+      .from("leads")
+      .insert({
+        nome: data.nome,
+        email: data.email,
+        telefone: data.telefone,
+        empresa: data.empresa,
+      })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    if (!row?.id) throw new Error("Lead não foi salvo. Verifique as políticas RLS no Supabase.");
+    return String(row.id);
+  }, []);
+
+  const registerViaBackend = useCallback(async (data: LeadData): Promise<string> => {
+    const controller = new AbortController();
+    const timeoutMs = 15000;
+    const id = setTimeout(
+      () => controller.abort(new DOMException(`Tempo esgotado (${timeoutMs / 1000}s)`, "AbortError")),
+      timeoutMs
+    );
     try {
-      const response = await fetch(`${API_URL}/api/leads/register`, {
+      const healthRes = await fetch(`${API_URL}/api/health`, { signal: controller.signal });
+      clearTimeout(id);
+      if (!healthRes.ok) {
+        const body = await healthRes.json().catch(() => ({}));
+        const detail = body?.detail || "API ou banco indisponível.";
+        const hint = " Configure NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY no .env.local para usar o Supabase diretamente.";
+        throw new Error(detail + hint);
+      }
+      const ctrl2 = new AbortController();
+      const id2 = setTimeout(() => ctrl2.abort(), timeoutMs);
+      const res = await fetch(`${API_URL}/api/leads/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
+        signal: ctrl2.signal,
       });
-      if (!response.ok) throw new Error("Erro ao registrar lead");
-
-      const result = await response.json();
-      setLeadData({ ...data, id: result.lead_id });
-      setHasEndedConversation(false);
-    } catch (error) {
-      console.error("Erro ao registrar lead:", error);
-      alert("Erro ao processar seu cadastro. Tente novamente.");
-    } finally {
-      setIsRegistering(false);
+      clearTimeout(id2);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.detail || "Erro ao registrar lead");
+      }
+      const result = await res.json();
+      if (!result.lead_id) throw new Error("Lead não foi salvo corretamente.");
+      return result.lead_id;
+    } catch (e) {
+      clearTimeout(id);
+      throw e;
     }
   }, []);
+
+  const handleLeadSubmit = useCallback(
+    async (data: LeadData) => {
+      setIsRegistering(true);
+      try {
+        const leadId = USE_SUPABASE_LEADS
+          ? await registerViaSupabase(data)
+          : await registerViaBackend(data);
+        setLeadData({ ...data, id: leadId });
+        setHasEndedConversation(false);
+      } catch (error) {
+        const isAbort = error instanceof Error && error.name === "AbortError";
+        const message = isAbort
+          ? "Tempo esgotado. Verifique se o backend está rodando."
+          : error instanceof Error
+            ? error.message
+            : "Erro ao processar seu cadastro.";
+        if (!isAbort) console.error("Erro ao registrar lead:", error);
+        alert(message);
+      } finally {
+        setIsRegistering(false);
+      }
+    },
+    [registerViaSupabase, registerViaBackend]
+  );
 
   const handleRestart = useCallback(() => {
     setLeadData(null);

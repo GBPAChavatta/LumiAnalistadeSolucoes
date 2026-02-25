@@ -52,5 +52,28 @@ async def root():
 
 @app.get("/health")
 async def health():
-    """Endpoint de health check."""
+    """Health check básico (API)."""
     return {"status": "healthy"}
+
+
+@app.get("/api/health")
+async def api_health():
+    """Health check incluindo conexão com banco de dados."""
+    if not settings.database_url:
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
+            status_code=503,
+            content={"status": "unhealthy", "database": "disconnected", "detail": "DATABASE_URL não configurado"},
+        )
+    try:
+        from app.database import get_pool
+        pool = await get_pool()
+        async with pool.acquire() as conn:
+            await conn.fetchval("SELECT 1")
+        return {"status": "healthy", "database": "connected"}
+    except Exception as e:
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
+            status_code=503,
+            content={"status": "unhealthy", "database": "disconnected", "detail": str(e)},
+        )

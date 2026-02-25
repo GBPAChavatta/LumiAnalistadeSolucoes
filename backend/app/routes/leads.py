@@ -18,7 +18,12 @@ class LeadCreate(BaseModel):
 
 @router.post("/register")
 async def register_lead(lead: LeadCreate):
-    """Registra um novo lead no PostgreSQL (Supabase)."""
+    """Registra um novo lead no PostgreSQL (Supabase). Só retorna sucesso após confirmar que foi salvo."""
+    if not settings.database_url:
+        raise HTTPException(
+            status_code=503,
+            detail="DATABASE_URL não configurado. Adicione em backend/.env para persistir leads.",
+        )
     try:
         pool = await get_pool()
         lead_id = uuid.uuid4()
@@ -34,11 +39,21 @@ async def register_lead(lead: LeadCreate):
                 lead.telefone,
                 lead.empresa,
             )
+            row = await conn.fetchrow(
+                "SELECT id FROM leads WHERE id = $1", lead_id
+            )
+        if not row:
+            raise HTTPException(
+                status_code=500,
+                detail="Lead não foi persistido no banco. Tente novamente.",
+            )
         return {
             "success": True,
             "message": "Lead registrado com sucesso",
             "lead_id": str(lead_id),
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao registrar lead: {str(e)}")
 
@@ -46,6 +61,11 @@ async def register_lead(lead: LeadCreate):
 @router.get("/list")
 async def list_leads():
     """Lista todos os leads do PostgreSQL."""
+    if not settings.database_url:
+        raise HTTPException(
+            status_code=503,
+            detail="DATABASE_URL não configurado.",
+        )
     try:
         pool = await get_pool()
         async with pool.acquire() as conn:
