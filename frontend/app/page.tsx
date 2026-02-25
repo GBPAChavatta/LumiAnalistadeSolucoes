@@ -60,7 +60,10 @@ export default function Home() {
       clearTimeout(id2);
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body?.detail || "Erro ao registrar lead");
+        const d = body?.detail;
+        const detail = typeof d === "string" ? d : Array.isArray(d) ? d.map((x: { msg?: string }) => x?.msg || String(x)).join("; ") : "Erro ao registrar lead";
+        const hint = !USE_SUPABASE_LEADS ? " Configure Supabase no .env.local para salvar direto no banco." : "";
+        throw new Error((detail || "Erro ao registrar lead") + hint);
       }
       const result = await res.json();
       if (!result.lead_id) throw new Error("Lead não foi salvo corretamente.");
