@@ -29,8 +29,12 @@ class Settings(BaseSettings):
         cors_str = self.cors_origins or "http://localhost:3000"
         if isinstance(cors_str, list):
             return cors_str
-        # Dividir por vírgula e limpar espaços
-        return [origin.strip() for origin in cors_str.split(",") if origin.strip()]
+        # Dividir por vírgula, limpar espaços e remover trailing slash (navegador envia sem /)
+        return [
+            origin.strip().rstrip("/")
+            for origin in cors_str.split(",")
+            if origin.strip()
+        ]
     
     class Config:
         env_file = _ENV_FILE

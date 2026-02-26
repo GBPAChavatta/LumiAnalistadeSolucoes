@@ -35,11 +35,12 @@
 4. Configurações:
    - **Root Directory**: `frontend` (ou deixe e use o `vercel.json` na raiz)
    - **Framework Preset**: Next.js
-5. Em **Environment Variables**, o `NEXT_PUBLIC_API_URL` de prod já está em `.env.production`. Opcionalmente defina na Vercel para sobrescrever:
-   - `NEXT_PUBLIC_API_URL` = `https://lumianalistadesolucoes.onrender.com` (ambiente **Production**)
-   - Opcional (para leads direto no Supabase):
+5. Em **Environment Variables** (Vercel):
+   - `NEXT_PUBLIC_API_URL` = `https://lumianalistadesolucoes.onrender.com` (já em .env.production; Vercel sobrescreve se definido)
+   - **Supabase (para leads direto no frontend):** defina na Vercel:
      - `NEXT_PUBLIC_SUPABASE_URL`
-     - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+     - `NEXT_PUBLIC_SUPABASE_ANON_KEY` (ou `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` se usar integração Vercel+Supabase)
+   - **Importante:** variáveis `NEXT_PUBLIC_*` são embutidas no build. Qualquer alteração exige novo deploy. Use **Redeploy → Clear build cache** para garantir que as vars sejam aplicadas.
    - Para a página **Consulta de Leads** (Google OAuth):
      - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (ver [CONSULTA_LEADS_SETUP.md](CONSULTA_LEADS_SETUP.md))
      - `NEXTAUTH_SECRET` (obrigatório em produção: `openssl rand -base64 32`)
@@ -57,7 +58,8 @@ Depois que o frontend estiver publicado, edite o backend no Render e defina:
 CORS_ORIGINS=https://seu-projeto.vercel.app
 ```
 
-Ou, para aceitar múltiplas origens: `https://app1.vercel.app,https://app2.vercel.app`
+Ou, para aceitar múltiplas origens: `https://app1.vercel.app,https://app2.vercel.app`  
+**Dica:** Use URLs sem barra final (ex: `https://seu-app.vercel.app`). O backend remove trailing slashes automaticamente.
 
 ## Ambientes dev e prod
 
@@ -66,7 +68,7 @@ Ou, para aceitar múltiplas origens: `https://app1.vercel.app,https://app2.verce
 | **Dev** | `http://localhost:8000` | `.env.development` / `npm run dev` |
 | **Prod** | `https://lumianalistadesolucoes.onrender.com` | `.env.production` / Vercel |
 
-O Next.js usa `.env.development` em `npm run dev` e `.env.production` no build de produção. A Vercel lê automaticamente `.env.production`; variáveis definidas no painel da Vercel sobrescrevem o arquivo.
+O Next.js usa `.env.development` em `npm run dev` e `.env.production` no build de produção. **Ordem de prioridade:** variáveis da Vercel sobrescrevem `.env.production`. Em produção, prefira definir credenciais na Vercel, não em arquivos versionados. `.env.production` deve ter apenas defaults não sensíveis (ex.: URL da API).
 
 ---
 
@@ -96,3 +98,13 @@ Quando perguntado, defina `NEXT_PUBLIC_API_URL` com a URL do backend (ex: `https
 ### Render (backend)
 
 Use o dashboard ou o [Render CLI](https://render.com/docs/cli) para conectar o repositório.
+
+---
+
+## Troubleshooting: Errno 101 (Network is unreachable)
+
+O erro `[Errno 101] Network is unreachable` ocorre no **backend** (Render) ao tentar conectar ao Supabase PostgreSQL via `DATABASE_URL`. O frontend mostra isso quando usa o backend para registrar leads.
+
+**Fluxo recomendado (evita o erro):** use Supabase diretamente no frontend definindo `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` na Vercel. Assim o fluxo de leads é frontend → Supabase, sem passar pelo backend.
+
+**Se precisar que o backend use o banco:** investigue `DATABASE_URL` no Render (formato pooler vs conexão direta, IPv6 vs IPv4), verifique se o projeto Supabase está ativo (não pausado) e consulte os docs do Render sobre restrições de rede no plano free.
