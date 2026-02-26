@@ -46,7 +46,7 @@ export default function Home() {
       if (!healthRes.ok) {
         const body = await healthRes.json().catch(() => ({}));
         const detail = body?.detail || "API ou banco indisponível.";
-        const hint = " Configure NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY no .env.local para usar o Supabase diretamente.";
+        const hint = " Configure NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY no .env.local (dev) ou nas variáveis da Vercel (prod) para usar o Supabase diretamente.";
         throw new Error(detail + hint);
       }
       const ctrl2 = new AbortController();
@@ -62,7 +62,7 @@ export default function Home() {
         const body = await res.json().catch(() => ({}));
         const d = body?.detail;
         const detail = typeof d === "string" ? d : Array.isArray(d) ? d.map((x: { msg?: string }) => x?.msg || String(x)).join("; ") : "Erro ao registrar lead";
-        const hint = !USE_SUPABASE_LEADS ? " Configure Supabase no .env.local para salvar direto no banco." : "";
+        const hint = !USE_SUPABASE_LEADS ? " Configure Supabase no .env.local (dev) ou na Vercel (prod) para salvar direto no banco." : "";
         throw new Error((detail || "Erro ao registrar lead") + hint);
       }
       const result = await res.json();
