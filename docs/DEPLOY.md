@@ -35,8 +35,8 @@
 4. Configurações:
    - **Root Directory**: `frontend` (ou deixe e use o `vercel.json` na raiz)
    - **Framework Preset**: Next.js
-5. Em **Environment Variables**, adicione:
-   - `NEXT_PUBLIC_API_URL` = URL do backend Render (ex: `https://lumi-backend.onrender.com`)
+5. Em **Environment Variables**, o `NEXT_PUBLIC_API_URL` de prod já está em `.env.production`. Opcionalmente defina na Vercel para sobrescrever:
+   - `NEXT_PUBLIC_API_URL` = `https://lumianalistadesolucoes.onrender.com` (ambiente **Production**)
    - Opcional (para leads direto no Supabase):
      - `NEXT_PUBLIC_SUPABASE_URL`
      - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
@@ -58,6 +58,15 @@ CORS_ORIGINS=https://seu-projeto.vercel.app
 ```
 
 Ou, para aceitar múltiplas origens: `https://app1.vercel.app,https://app2.vercel.app`
+
+## Ambientes dev e prod
+
+| Ambiente | Backend | Frontend |
+|----------|---------|----------|
+| **Dev** | `http://localhost:8000` | `.env.development` / `npm run dev` |
+| **Prod** | `https://lumianalistadesolucoes.onrender.com` | `.env.production` / Vercel |
+
+O Next.js usa `.env.development` em `npm run dev` e `.env.production` no build de produção. A Vercel lê automaticamente `.env.production`; variáveis definidas no painel da Vercel sobrescrevem o arquivo.
 
 ---
 
