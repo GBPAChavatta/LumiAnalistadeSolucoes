@@ -46,7 +46,7 @@ export default function Home() {
       if (!healthRes.ok) {
         const body = await healthRes.json().catch(() => ({}));
         const detail = body?.detail || "API ou banco indisponível.";
-        const hint = " Configure NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY no .env.local (dev) ou nas variáveis da Vercel (prod) para usar o Supabase diretamente.";
+        const hint = " Configure NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_ANON_KEY. Se já estão na Vercel, faça um redeploy (Redeploy → Clear cache) pois NEXT_PUBLIC_* é definido no build.";
         throw new Error(detail + hint);
       }
       const ctrl2 = new AbortController();
